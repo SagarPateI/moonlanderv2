@@ -1,23 +1,35 @@
-import React, { useRef, useEffect } from "react"; // Import useEffect from React
+import React, { useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Physics, useBox, usePlane } from "@react-three/cannon";
 import useKeyControls from "./useKeyControls";
-import ErrorBoundary from "./ErrorBoundary"; // Import the ErrorBoundary component
+import ErrorBoundary from "./ErrorBoundary";
+
+const MOON_LANDER_MASS = 15200; // Mass of NASA moon lander in kg
 
 export default function App() {
-  const { forward, backward, left, right, shift } = useKeyControls();
+  const { forward, backward, left, right, shift, camera } = useKeyControls();
 
   return (
     <ErrorBoundary>
-      {" "}
-      {/* Wrap the entire application with ErrorBoundary */}
       <Canvas
-        camera={{ position: [0, 3, 5], fov: 75 }} // Adjust the FOV to a higher value
+        camera={{ position: [0, 3, 5], fov: 75 }}
+        shadows
         onKeyDown={() => {}}
         onKeyUp={() => {}}
       >
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} />
+        <directionalLight
+          castShadow
+          position={[10, 20, 5]}
+          intensity={1}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-camera-far={50}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
+        />
         <Physics>
           <CameraFollow
             forward={forward}
@@ -25,9 +37,10 @@ export default function App() {
             left={left}
             right={right}
             shift={shift}
+            camera={camera} // Pass the camera to the CameraFollow component
           >
-            <Box position={[0, 1, 0]} />
-            <Floor position={[0, -0.5, 0]} />
+            <Box position={[0, 1, 0]} castShadow receiveShadow />
+            <Floor position={[0, -0.5, 0]} receiveShadow />
           </CameraFollow>
         </Physics>
       </Canvas>
@@ -110,8 +123,8 @@ function CameraFollow({ children, forward, backward, left, right, shift }) {
 }
 
 function Box(props) {
-  const [boxRef] = useBox(() => ({
-    mass: 1,
+  const [boxRef, api] = useBox(() => ({
+    mass: MOON_LANDER_MASS, // Set the mass of the cube
     position: props.position,
     args: [1, 1, 1]
   }));
@@ -127,14 +140,15 @@ function Box(props) {
 function Floor(props) {
   const [floorRef] = usePlane(() => ({
     type: "Static",
-    position: [0, -0.5, 0], // Update the position here to bring it closer to the cube
+    position: [0, -1.5, 0],
     rotation: [-Math.PI / 2, 0, 0]
   }));
 
   return (
     <mesh ref={floorRef}>
-      <planeGeometry args={[100, 100]} />
-      <meshStandardMaterial color="lightgray" />
+      <planeGeometry args={[100, 100, 64, 64]} />
+      <meshStandardMaterial color="#999999" />{" "}
+      {/* Set the floor color to gray */}
     </mesh>
   );
 }

@@ -1,50 +1,88 @@
-import { useEffect, useRef } from "react"; // Import useRef instead of useState
+import { useEffect, useRef } from "react";
+
+const ASCENT_THRUST = 0.01;
+const LATERAL_THRUST = 0.005;
+const GRAVITY = 0.0005;
 
 export default function useKeyControls() {
-  const forward = useRef(false); // Use useRef for each control state
+  const camera = useRef(null);
+  const forward = useRef(false);
   const backward = useRef(false);
   const left = useRef(false);
   const right = useRef(false);
   const shift = useRef(false);
+  const velocity = useRef([0, 0, 0]);
 
   useEffect(() => {
-    const keyDownHandler = (event) => {
+    const handleKeyDown = (event) => {
       if (event.key === "ArrowUp" || event.key === "w") {
-        setControls((prevControls) => ({ ...prevControls, forward: true }));
+        forward.current = true;
       } else if (event.key === "ArrowDown" || event.key === "s") {
-        setControls((prevControls) => ({ ...prevControls, backward: true }));
+        backward.current = true;
       } else if (event.key === "ArrowLeft" || event.key === "a") {
-        setControls((prevControls) => ({ ...prevControls, left: true }));
+        left.current = true;
       } else if (event.key === "ArrowRight" || event.key === "d") {
-        setControls((prevControls) => ({ ...prevControls, right: true }));
+        right.current = true;
       } else if (event.key === "Shift") {
-        setControls((prevControls) => ({ ...prevControls, shift: true }));
+        shift.current = true;
       }
     };
 
-    const keyUpHandler = (event) => {
+    const handleKeyUp = (event) => {
       if (event.key === "ArrowUp" || event.key === "w") {
-        setControls((prevControls) => ({ ...prevControls, forward: false }));
+        forward.current = false;
       } else if (event.key === "ArrowDown" || event.key === "s") {
-        setControls((prevControls) => ({ ...prevControls, backward: false }));
+        backward.current = false;
       } else if (event.key === "ArrowLeft" || event.key === "a") {
-        setControls((prevControls) => ({ ...prevControls, left: false }));
+        left.current = false;
       } else if (event.key === "ArrowRight" || event.key === "d") {
-        setControls((prevControls) => ({ ...prevControls, right: false }));
+        right.current = false;
       } else if (event.key === "Shift") {
-        setControls((prevControls) => ({ ...prevControls, shift: false }));
+        shift.current = false;
       }
     };
 
-    document.addEventListener("keydown", keyDownHandler);
-    document.addEventListener("keyup", keyUpHandler);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
 
     // Clean up the event listeners on unmount
     return () => {
-      document.removeEventListener("keydown", keyDownHandler);
-      document.removeEventListener("keyup", keyUpHandler);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
-  return { forward, backward, left, right, shift }; // Return each control state as a ref object
+  useEffect(() => {
+    const speed = shift.current ? 0.2 : 0.1;
+    const acceleration = [0, 0, 0];
+
+    if (camera.current) {
+      // Calculate vertical ascent thrust
+      if (forward.current) {
+        acceleration[1] += ASCENT_THRUST;
+      }
+
+      // Calculate vertical descent due to gravity
+      acceleration[1] -= GRAVITY;
+
+      // Calculate lateral thrust
+      if (left.current) {
+        acceleration[0] += LATERAL_THRUST;
+      } else if (right.current) {
+        acceleration[0] -= LATERAL_THRUST;
+      }
+
+      // Update velocity based on acceleration
+      velocity.current[0] += acceleration[0];
+      velocity.current[1] += acceleration[1];
+      velocity.current[2] += acceleration[2];
+
+      // Update position based on velocity
+      camera.position.x += velocity.current[0] * speed;
+      camera.position.y += velocity.current[1] * speed;
+      camera.position.z += velocity.current[2] * speed;
+    }
+  }, [forward, backward, left, right, shift, camera]);
+
+  return { forward, backward, left, right, shift, camera: camera.current };
 }
