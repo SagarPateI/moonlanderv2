@@ -12,7 +12,7 @@ export default function App() {
       {" "}
       {/* Wrap the entire application with ErrorBoundary */}
       <Canvas
-        camera={{ position: [0, 5, 10], fov: 60 }}
+        camera={{ position: [0, 3, 5], fov: 75 }} // Adjust the FOV to a higher value
         onKeyDown={() => {}}
         onKeyUp={() => {}}
       >
@@ -81,14 +81,17 @@ function CameraFollow({ children, forward, backward, left, right, shift }) {
   useFrame(({ camera }) => {
     if (boxRef.current && group.current) {
       let speed = 0.1;
-      if (shift) speed = 0.2;
+      if (shift.value) speed = 0.2;
 
       // Update cube's rotation based on tilt
-      boxRef.current.rotation.z = (right ? -1 : left ? 1 : 0) * Math.PI * 0.1;
+      boxRef.current.rotation.z =
+        (right.value ? -1 : left.value ? 1 : 0) * Math.PI * 0.1;
 
       // Update cube's position based on thrust and tilt
-      boxRef.current.position.y += (forward ? 1 : backward ? -1 : 0) * speed;
-      boxRef.current.position.x += (left ? 1 : right ? -1 : 0) * speed;
+      boxRef.current.position.y +=
+        (forward.value ? 1 : backward.value ? -1 : 0) * speed;
+      boxRef.current.position.x +=
+        (left.value ? 1 : right.value ? -1 : 0) * speed;
 
       // Camera follows the cube with a little offset
       group.current.position.copy(boxRef.current.position);
@@ -124,7 +127,7 @@ function Box(props) {
 function Floor(props) {
   const [floorRef] = usePlane(() => ({
     type: "Static",
-    position: props.position,
+    position: [0, -0.5, 0], // Update the position here to bring it closer to the cube
     rotation: [-Math.PI / 2, 0, 0]
   }));
 

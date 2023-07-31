@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react"; // Import useRef instead of useState
 
 export default function useKeyControls() {
-  const [controls, setControls] = useState({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-    shift: false
-  });
+  const forward = useRef(false); // Use useRef for each control state
+  const backward = useRef(false);
+  const left = useRef(false);
+  const right = useRef(false);
+  const shift = useRef(false);
 
   useEffect(() => {
     const keyDownHandler = (event) => {
@@ -48,5 +46,5 @@ export default function useKeyControls() {
     };
   }, []);
 
-  return { ...controls };
+  return { forward, backward, left, right, shift }; // Return each control state as a ref object
 }
